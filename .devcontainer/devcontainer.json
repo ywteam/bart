@@ -1,0 +1,44 @@
+{
+	"name": "Bart Dev Container",
+	"dockerComposeFile": [
+		"../compose.yaml"
+	],
+	"service": "bart-devcontainer",
+	// "containerUser": "root",
+	// "remoteUser": "root",
+	"shutdownAction": "none",
+	// "workspaceFolder": "${localWorkspaceFolderBasename}",	
+	"workspaceFolder": "/workspace",
+	"mounts": [
+		"source=../../..,target=/workspace,type=bind,consistency=cached"		
+	],
+	"secrets": {
+		"BART_GITHUB_TOKEN": "bart-github-token"
+	},
+    // "workspaceMount": "source=../../..,target=/workspace",
+	// "postStartCommand": "chmod -x ./*.sh; ./handler.sh \"$PWD\"",
+	// "updateContentCommand": "chmod -x ./\"${PWD}\"*.sh; \"${PWD}\"/handler.sh",
+	"features": {		
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				//golang
+				"golang.go",
+                "golang.go-nightly",
+                "premparihar.gotestexplorer",
+				"neonxp.gotools",
+				//shell
+				"timonwong.shellcheck",
+				"jetmartin.bats",
+				"foxundermoon.shell-format",
+				"bmalehorn.shell-syntax",
+				"rogalmic.bash-debug",
+				"humao.rest-client",
+				"typespec.typespec-vscode",
+				"github.vscode-github-actions"
+			]
+		}        
+	}
+}

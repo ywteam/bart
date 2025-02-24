@@ -1,0 +1,14 @@
+services:
+  bart-devcontainer:
+    container_name: bart-devcontainer-${UID:-1000}
+    image: mcr.microsoft.com/devcontainers/go:dev-1.22-bookworm
+    command: sleep infinity
+    # networks:
+    #   - ywteam
+    #   - ywteam-edge
+    #   - ywteam-host
+    environment:
+      - HOST_USER_ID=${UID:-1000}
+      - HOST_GROUP_ID=${GID:-1000}
+    volumes:
+      - ../../:/workspace:cached
