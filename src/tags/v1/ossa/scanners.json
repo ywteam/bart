@@ -1,0 +1,384 @@
+{
+    "params": {
+        "--path=": {
+            "type": "path",
+            "description": "The target to analyze",
+            "required": true,
+            "default": ".",
+            "input": {
+                "argv": "",
+                "env": "TARGET_PATH",
+                "config": "path",
+                "query": "path",
+                "prompt": "Enter the path to analyze",
+                "json": "path"
+            }
+        }
+    },
+    "scanners": [
+        {
+            "id": "cbb46398-a79e-4afe-9672-badabf6075e7",
+            "vendor": {
+                "description": "Count Lines of Code",
+                "url": "https://github.com/AlDanial/cloc"
+            },
+            "hooks": [
+                "pre-commit"
+            ],
+            "capabilities": {
+                "formats": [
+                    "json",
+                    "text",
+                    "sql",
+                    "xml",
+                    "yml",
+                    "csv"
+                ],
+                "scopes": [
+                    "sast",
+                    "sca"
+                ],
+                "targets": [
+                    "file",
+                    "folder"
+                ],
+                "features": [
+                    "Count blank lines",
+                    "Count comment lines",
+                    "Count physical lines",
+                    "Count lines of code by language",
+                    "Count lines of code by file"
+                ]
+            },
+            "packages": {
+                "apt": [
+                    "cloc"
+                ],
+                "brew": [
+                    "cloc"
+                ],
+                "docker": [
+                    "alpine/cloc"
+                ],
+                "npm": [
+                    "cloc"
+                ],
+                "shell": [
+                    "curl -s https://raw.githubusercontent.com/AlDanial/cloc/master/cloc -o cloc && chmod +x cloc"
+                ],
+                "choco": [
+                    "cloc"
+                ]
+            },
+            "cli": {
+                "cmd": "cloc",
+                "args": [
+                    "--quiet",
+                    "--json",
+                    "--exclude-dir=vendor,node_modules",
+                    "--exclude-ext=lock"
+                ],
+                "version": [
+                    "--version"
+                ],
+                "params": {
+                    "--extract-with": {
+                        "description": "This option is only needed if cloc is unable to figure out how to extract the contents of the input file(s) by itself. Use <cmd> to extract binary archive files (e.g.: .tar.gz, .zip, .Z).  Use the literal '>FILE<' as a stand-in for the actual file(s) to be extracted.  For example, to count lines of code in the input files    gcc-4.2.tar.gz  perl-5.8.8.tar.gz on Unix use   --extract-with='gzip -dc >FILE< | tar xf -' or, if you have GNU tar,   --extract-with='tar zxf >FILE<' and on Windows use, for example:   --extract-with=\\\"\\\"c:\\Program Files\\WinZip\\WinZip32.exe\\\" -e -o >FILE< .\"",
+                        "type": "string",
+                        "required": true,
+                        "default": null,
+                        "input": {
+                            "argv": "--extract-with=",
+                            "env": "CLOC_EXTRACT_WITH",
+                            "config": "extract-with",
+                            "query": "extract-with",
+                            "prompt": "Enter the command to extract compressed files",
+                            "json": "extract-with"
+                        }
+                    },
+                    "--list-file": {
+                        "description": "Take the list of file and/or directory names to process from <file>, which has one file/directory name per line.  Only exact matches are counted; relative path names will be resolved starting from the directory where cloc is invoked.  Set <file> to - to read file names from a STDIN pipe. See also --exclude-list-file.",
+                        "type": "string",
+                        "required": true,
+                        "default": null,
+                        "input": {
+                            "argv": "--list-file=",
+                            "env": "CLOC_LIST_FILE",
+                            "config": "list-file",
+                            "query": "list-file",
+                            "prompt": "Enter the file containing the list of files to count",
+                            "json": "list-file"
+                        }
+                    },
+                    "--diff-list-file": {
+                        "description": "Take the pairs of file names to be diff'ed from <file>, whose format matches the output of --diff-alignment.  (Run with that option to see a sample.)  The language identifier at the end of each line is ignored.  This enables --diff mode and bypasses file pair alignment logic.",
+                        "type": "string",
+                        "required": true,
+                        "default": null,
+                        "input": {
+                            "argv": "--diff-list-file=",
+                            "env": "CLOC_DIFF_LIST_FILE",
+                            "config": "diff-list-file",
+                            "query": "diff-list-file",
+                            "prompt": "Enter the file containing the list of files to count",
+                            "json": "diff-list-file"
+                        }
+                    },
+                    "--vcs": {
+                        "description": "Invoke a system call to <VCS> to obtain a list of files to work on.  If <VCS> is 'git', then will invoke 'git ls-files' to get a file list and 'git submodule status' to get a list of submodules whose contents will be ignored.  See also --git which accepts git commit hashes and branch names. If <VCS> is 'svn' then will invoke 'svn list -R'. The primary benefit is that cloc will then skip files explicitly excluded by the versioning tool in question, ie, those in .gitignore or have the svn:ignore property. Alternatively <VCS> may be any system command that generates a list of files. Note:  cloc must be in a directory which can read the files as they are returned by <VCS>.  cloc will not download files from remote repositories. 'svn list -R' may refer to a remote repository to obtain file names (and therefore may require authentication to the remote repository), but the files themselves must be local. Setting <VCS> to 'auto' selects between 'git' and 'svn' (or neither) depending on the presence of a .git or .svn subdirectory below the directory where cloc is invoked.",
+                        "type": "string",
+                        "required": true,
+                        "default": null,
+                        "input": {
+                            "argv": "--vcs=",
+                            "env": "CLOC_VCS",
+                            "config": "vcs",
+                            "query": "vcs",
+                            "prompt": "Enter the version control system used to retrieve the list of files to count",
+                            "json": "vcs"
+                        }
+                    },
+                    "--unicode": {
+                        "description": "Check binary files to see if they contain Unicode expanded ASCII text.  This causes performance to drop noticeably.",
+                        "type": "boolean",
+                        "required": true,
+                        "default": null,
+                        "input": {
+                            "argv": "--unicode",
+                            "env": "CLOC_UNICODE",
+                            "config": "unicode",
+                            "query": "unicode",
+                            "prompt": "Use Unicode characters in the output?"
+                        }
+                    }
+                }
+            },
+            "api": {
+                "sast/sca/count-lines-of-code/v2": {
+                    "help": "Count lines of code v2",
+                    "args": {
+                        "--autoconf": {
+                            "description": "Count .in files (as processed by GNU autoconf) of recognized languages.  See also --no-autogen.",
+                            "type": "boolean",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--autoconf",
+                                "env": "CLOC_AUTOCONF",
+                                "config": "autoconf",
+                                "query": "autoconf",
+                                "prompt": "Use autoconf?"
+                            }
+                        },
+                        "--by-file": {
+                            "description": "Report results for every source file encountered",
+                            "type": "boolean",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--by-file",
+                                "env": "CLOC_BY_FILE",
+                                "config": "by-file",
+                                "query": "by-file",
+                                "prompt": "Count lines of code by file?"
+                            }
+                        },
+                        "--by-file-by-lang": {
+                            "description": "Report results for every source file encountered",
+                            "type": "boolean",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--by-file-by-lang",
+                                "env": "CLOC_BY_FILE_BY_LANG",
+                                "config": "by-file-by-lang",
+                                "query": "by-file-by-lang",
+                                "prompt": "Count lines of code by file by language?"
+                            }
+                        },
+                        "--config": {
+                            "description": "Read command line switches from <file> instead of the default location of /home/al/.config/cloc/options.txt. The file should contain one switch, along with arguments (if any), per line.  Blank lines and lines beginning with '#' are skipped.  Options given on the command line take priority over entries read from the file.",
+                            "type": "string",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--config=",
+                                "env": "CLOC_CONFIG",
+                                "config": "config",
+                                "query": "config",
+                                "prompt": "Enter the file to read options from",
+                                "json": "config"
+                            }
+                        },
+                        "--count-and-diff": {
+                            "description": "First perform direct code counts of source file(s) of <set1> and <set2> separately, then perform a diff of these.  Inputs may be pairs of files, directories, or archives.  If --out or --report-file is given, three output files will be created, one for each of the two counts and one for the diff.  See also --diff, --diff-alignment, --diff-timeout, --ignore-case, --ignore-whitespace.",
+                            "type": "boolean",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--count-and-diff",
+                                "env": "CLOC_COUNT_AND_DIFF",
+                                "config": "count-and-diff",
+                                "query": "count-and-diff",
+                                "prompt": "Count lines of code and diff the results?"
+                            }
+                        },
+                        "--diff": {
+                            "description": "Compute differences in code and comments between source file(s) of <set1> and <set2>.  The inputs may be any mix of files, directories, archives, or git commit hashes.  Use --diff-alignment to generate a list showing which file pairs where compared.  When comparing git branches, only files which have changed in either commit are compared. See also --git, --count-and-diff, --diff-alignment, --diff-list-file, --diff-timeout, --ignore-case, --ignore-whitespace.",
+                            "type": "string",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--diff=",
+                                "env": "CLOC_DIFF",
+                                "config": "diff",
+                                "query": "diff",
+                                "prompt": "Enter the file containing the list of files to diff",
+                                "json": "diff"
+                            }
+                        },
+                        "--csv": {
+                            "description": "Output results in CSV format",
+                            "type": "boolean",
+                            "required": false,
+                            "default": null,
+                            "input": {
+                                "argv": "--csv",
+                                "env": "CLOC_CSV",
+                                "config": "csv",
+                                "query": "csv",
+                                "prompt": "Output results in CSV format?"
+                            }
+                        },
+                        "--exclude-dir": {
+                            "description": "Exclude the specified directory from the count",
+                            "type": "string",
+                            "required": false,
+                            "default": "vendor,node_modules",
+                            "input": {
+                                "argv": "--exclude-dir",
+                                "env": "CLOC_EXCLUDE_DIR",
+                                "config": "exclude-dir",
+                                "query": "exclude-dir",
+                                "prompt": "Enter the directory to exclude from the count",
+                                "json": "exclude-dir"
+                            }
+                        }
+                    }
+                },
+                "sast/sca/count-lines-of-code": {
+                    "help": "Count lines of code",
+                    "args": {
+                        "--autoconf": {
+                            "description": "Count .in files (as processed by GNU autoconf) of recognized languages.  See also --no-autogen.",
+                            "type": "boolean",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--autoconf",
+                                "env": "CLOC_AUTOCONF",
+                                "config": "autoconf",
+                                "query": "autoconf",
+                                "prompt": "Use autoconf?"
+                            }
+                        },
+                        "--by-file": {
+                            "description": "Report results for every source file encountered",
+                            "type": "boolean",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--by-file",
+                                "env": "CLOC_BY_FILE",
+                                "config": "by-file",
+                                "query": "by-file",
+                                "prompt": "Count lines of code by file?"
+                            }
+                        },
+                        "--by-file-by-lang": {
+                            "description": "Report results for every source file encountered",
+                            "type": "boolean",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--by-file-by-lang",
+                                "env": "CLOC_BY_FILE_BY_LANG",
+                                "config": "by-file-by-lang",
+                                "query": "by-file-by-lang",
+                                "prompt": "Count lines of code by file by language?"
+                            }
+                        },
+                        "--config": {
+                            "description": "Read command line switches from <file> instead of the default location of /home/al/.config/cloc/options.txt. The file should contain one switch, along with arguments (if any), per line.  Blank lines and lines beginning with '#' are skipped.  Options given on the command line take priority over entries read from the file.",
+                            "type": "string",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--config=",
+                                "env": "CLOC_CONFIG",
+                                "config": "config",
+                                "query": "config",
+                                "prompt": "Enter the file to read options from",
+                                "json": "config"
+                            }
+                        },
+                        "--count-and-diff": {
+                            "description": "First perform direct code counts of source file(s) of <set1> and <set2> separately, then perform a diff of these.  Inputs may be pairs of files, directories, or archives.  If --out or --report-file is given, three output files will be created, one for each of the two counts and one for the diff.  See also --diff, --diff-alignment, --diff-timeout, --ignore-case, --ignore-whitespace.",
+                            "type": "boolean",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--count-and-diff",
+                                "env": "CLOC_COUNT_AND_DIFF",
+                                "config": "count-and-diff",
+                                "query": "count-and-diff",
+                                "prompt": "Count lines of code and diff the results?"
+                            }
+                        },
+                        "--diff": {
+                            "description": "Compute differences in code and comments between source file(s) of <set1> and <set2>.  The inputs may be any mix of files, directories, archives, or git commit hashes.  Use --diff-alignment to generate a list showing which file pairs where compared.  When comparing git branches, only files which have changed in either commit are compared. See also --git, --count-and-diff, --diff-alignment, --diff-list-file, --diff-timeout, --ignore-case, --ignore-whitespace.",
+                            "type": "string",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--diff=",
+                                "env": "CLOC_DIFF",
+                                "config": "diff",
+                                "query": "diff",
+                                "prompt": "Enter the file containing the list of files to diff",
+                                "json": "diff"
+                            }
+                        },
+                        "--csv": {
+                            "description": "Output results in CSV format",
+                            "type": "boolean",
+                            "required": true,
+                            "default": null,
+                            "input": {
+                                "argv": "--csv",
+                                "env": "CLOC_CSV",
+                                "config": "csv",
+                                "query": "csv",
+                                "prompt": "Output results in CSV format?"
+                            }
+                        },
+                        "--exclude-dir": {
+                            "description": "Exclude the specified directory from the count",
+                            "type": "string",
+                            "required": true,
+                            "default": "vendor,node_modules",
+                            "input": {
+                                "argv": "--exclude-dir",
+                                "env": "CLOC_EXCLUDE_DIR",
+                                "config": "exclude-dir",
+                                "query": "exclude-dir",
+                                "prompt": "Enter the directory to exclude from the count",
+                                "json": "exclude-dir"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

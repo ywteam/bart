@@ -4,8 +4,8 @@
 		"../compose.yaml"
 	],
 	"service": "bart-devcontainer",
-	// "containerUser": "root",
-	// "remoteUser": "root",
+	"containerUser": "root",
+	"remoteUser": "root",
 	"shutdownAction": "none",
 	// "workspaceFolder": "${localWorkspaceFolderBasename}",	
 	"workspaceFolder": "/workspace",

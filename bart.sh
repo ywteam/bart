@@ -35,14 +35,29 @@ bart:log:pipe() {
     return 0
 }
 bart:strings:trim() {
+    bart:strings:ltrim "$(bart:strings:rtrim "${1}")"
+    # local str="${1}"
+    # str="${str#"${str%%[![:space:]]*}"}"
+    # str="${str%"${str##*[![:space:]]}"}"
+    # echo -n "${str}"
+    # unset str
+    # return 0
+}
+bart:strings:rtrim() {
     local str="${1}"
-    str="${str#"${str%%[![:space:]]*}"}"
     str="${str%"${str##*[![:space:]]}"}"
     echo -n "${str}"
     unset str
     return 0
 }
-bart:code:run() {
+bart:strings:ltrim(){
+    local str="${1}"
+    str="${str#"${str%%[![:space:]]*}"}"
+    echo -n "${str}"
+    unset str
+    return 0
+}
+bart:markdown:codeblock() {
     local langName="${1}" && shift
     local code="${1}"
     {
@@ -103,6 +118,46 @@ bart:code:run() {
     unset langName code
     return 0
 }
+bart:markdown:varblock(){
+    local varBlock="${1}"
+    # varblocks can be nested in declaration and assigned to key with dots
+    # ---
+    # repo:
+    #   name: your_repo_name
+    #   description: A sample repository
+    #   license: MIT
+    #   visibility: public
+    #   default_branch: main
+    #   owner:
+    #     name: your_name
+    #     email: your_email
+    # ---
+    bart:log "infos" "Reading variables"
+    local key value lastKey    
+    
+    while IFS=':' read -r key value; do
+        local -a log=()
+        
+        value=$(bart:strings:trim "${value}")
+        key=$(bart:strings:rtrim "${key}")
+        # expect nested keys
+        if [[ ! "${key}" =~ ^[[:space:]]+ ]]; then
+            key=$(bart:strings:ltrim "${key}")
+            lastKey="${key}"
+            local -a breadcrumbs=("${key}")
+            # DOC["${key}"]="${value}"
+        else
+            key="${breadcrumbs[-1]}.${lastKey}.${key}"
+            # DOC["${key}"]="${value}"
+        fi
+        # save last key
+        # breadcrumbs+=("${key}")
+        bart:log "trace" "Variable" "${key}" "=" "${value}"
+        unset key value lastKey        
+    done <<<"${varBlock}"
+    unset varBlock key value lastKey breadcrumbs
+    return 0
+}
 bart:markdown:read() {
     local -A src=(
         ["input"]="$1"
@@ -112,25 +167,29 @@ bart:markdown:read() {
     declare -A -g -I DOC=()
     ! test -f "${src["input"]}" && bart:log "error" "File not found: ${src["input"]}" && unset src && return 1
     src[lines]=0
-    local codeStartAt codeEndAt codeLang codeBlock trimedLine isVarBlock
+    local codeStartAt codeEndAt codeLang codeBlock trimedLine isVarBlock varBlock
     while IFS= read -r line || [ -n "$line" ]; do
         trimedLine=$(bart:strings:trim "$line")
         ((src[lines]++))
         # bart:log "trace" "Reading line ${src["lines"]}"
         # read variables from --- block
         if [[ $trimedLine == '---' && -n "${isVarBlock}" ]]; then
-            unset isVarBlock        
+            unset isVarBlock
+            bart:markdown:varblock "${varBlock}"
         elif [[ $trimedLine == '---' && -z "${isVarBlock}" ]]; then
             isVarBlock=1
+            varBlock=""
         elif [[ -n "${isVarBlock}" ]]; then
+            # non trimed line for variables because of spaces, and variables can be nested
+            varBlock+="$line"$'\n'
             # read variable line
             # bart:echo "$line" # 7>&1
-            IFS=':' read -r key value <<<"$trimedLine"
-            key=$(bart:strings:trim "$key")
-            value=$(bart:strings:trim "$value")
-            bart:log "trace" "Variable" "${key}" "=" "${value}"
-            DOC["${key}"]="${value}"
-            unset key value        
+            # IFS=':' read -r key value <<<"$trimedLine"
+            # key=$(bart:strings:trim "$key")
+            # value=$(bart:strings:trim "$value")
+            # bart:log "trace" "Variable" "${key}" "=" "${value}"
+            # DOC["${key}"]="${value}"
+            # unset key value        
         elif [[ $trimedLine == '```'* && -z "${codeStartAt}" ]]; then
             codeStartAt=${src["lines"]}
             codeEndAt=
@@ -147,7 +206,7 @@ bart:markdown:read() {
         elif [[ -n "${codeStartAt}" && -n "${codeEndAt}" ]]; then
             # bart:echo -n '```'${codeLang}'' $'\n' "${codeBlock}" '```' $'\n'
             bart:log "info" "Running code block ${src["codes"]} in ${codeLang}" "${#codeBlock} characters"
-            bart:code:run "${codeLang}" "${codeBlock}" # >&7
+            bart:markdown:codeblock "${codeLang}" "${codeBlock}" # >&7
             if [[ $? -ne 0 ]]; then
                 bart:log "warning" "Failed to run code block ${src["codes"]} in ${codeLang}"
             else
