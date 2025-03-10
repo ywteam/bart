@@ -1,3 +1,6 @@
 [submodule "templates/repo"]
 	path = templates/repo
 	url = https://github.com/ywteam/bart.repo
+[submodule "src/cndm"]
+	path = src/cndm
+	url = https://github.com/ywteam/bart.cndm.git
