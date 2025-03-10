@@ -1,9 +1,0 @@
-http:
-  middlewares:
-    basic-auth:
-      basicAuth:
-        users:
-          # admin:password
-          - "admin:$apr1$yzXCOaAe$nn6/HUwjA/QwHLTaF6DYT1"
-          # - "{{ env "TRAEFIK_AUTH_USER" | default "admin" }}:{{ env "TRAEFIK_AUTH_PASS_HASH" | default "$$apr1$$vO3/IDvg$$JrbhU9NSQub83/mQu9/fP1" }}"
-        removeHeader: false

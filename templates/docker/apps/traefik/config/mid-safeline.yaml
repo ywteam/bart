@@ -1,6 +1,0 @@
-http:
-  middlewares:
-    safeline:
-      plugin:
-        safeline:
-          addr: "http://safeline-detector:8000"
