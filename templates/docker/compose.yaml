@@ -1,0 +1,9 @@
+name: ${STACK_NAME:-yellow}
+include:
+  - path:
+    - compose.networks.yaml
+    - compose.volumes.yaml
+    - compose.apps.yaml
+
+
+

@@ -1,0 +1,22 @@
+log:
+  level: "ERROR" # Options: DEBUG, PANIC, FATAL, ERROR (Default), WARN, and INFO
+  # filePath: /logs/traefik-container.log # Default is to STDOUT
+  # format: json # Uses text format (common) by default
+  # noColor: false # Recommended to be true when using common
+  # maxSize: 100 # In megabytes
+  # compress: true # gzip compression when rotating
+    
+
+accessLog:
+  format: "json"
+  # addInternals: true  # things like ping@internal
+  # filePath: /logs/traefik-access.log # In the Common Log Format (CLF) by default
+  # bufferingSize: 100 # Number of log lines
+  # fields:
+  #   names:
+  #     StartUTC: drop  # Write logs in Container Local Time instead of UTC
+  # filters:
+  #   statusCodes:
+  #     - "204-299"
+  #     - "400-499"
+  #     - "500-599"

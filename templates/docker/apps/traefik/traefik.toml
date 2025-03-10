@@ -1,0 +1,107 @@
+[global]
+  sendAnonymousUsage = false
+
+[providers.file]
+  directory = "/etc/traefik/config"
+  watch = true
+
+
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+  network = "edge"
+  watch = true
+  exposedByDefault = false
+#   defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+
+[providers.swarm]
+  endpoint = "unix:///var/run/docker.sock"
+  network = "edge"
+  watch = true
+  exposedByDefault = false
+  useBindPortIP = true
+  refreshSeconds = 15
+  httpClientTimeout = 10
+#  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+
+[log]
+level = "ERROR"
+format = "json"
+
+[accessLog]
+  # filePath = "/var/log/traefik/access.log"
+  format = "json"
+
+[entryPoints]
+ [entryPoints.web]
+   address = ":80"
+
+ [entryPoints.websecure]
+   address = ":443"
+
+ [entryPoints.traefik]
+   address = ":8080"  
+
+
+# [http.routers]
+#   [http.routers.https-redirect]
+#   rule = "HostRegexp(`{any:.*}`)"
+#   middlewares = ["https-redirect"]
+#   service = "dummy"
+
+[api]
+ dashboard = true
+ insecure = true
+
+[http.middlewares]
+#   [http.middlewares.dash-strip.stripprefix]
+#     prefixes = ["/dash"]
+#   [http.middlewares.api-strip.stripprefix]
+#     prefixes = ["/api"]
+  [http.middlewares.auth.basicAuth]
+    users = ["${TRAEFIK_AUTH_USER:-admin}:${TRAEFIK_AUTH_PASS_HASH:-$apr1$1b1b1b1b$}"]
+    removeHeader = true
+#   [http.middlewares.https-redirect.redirectscheme]
+#     scheme = "https"
+
+
+[http.services]
+  [http.services.dummy.LoadBalancer]
+     [[http.services.dummy.LoadBalancer.servers]]
+        url = ""
+
+[certificatesResolvers.staging.acme]
+  email = "${ACME_EMAIL:-xxx@xxx.com}"
+  storage = "${ACME_STORAGE:-/etc/traefik/config/acme.json}"
+  caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  [certificatesResolvers.staging.acme.httpChallenge]
+    entryPoint = "web"
+
+[certificatesResolvers.production.acme]
+  email = "${ACME_EMAIL:-xxx@xxx.com}"
+  storage = "${ACME_STORAGE:-/etc/traefik/config/acme.json}"
+  caServer = "https://acme-v02.api.letsencrypt.org/directory"
+  [certificatesResolvers.production.acme.httpChallenge]
+    entryPoint = "web"
+
+
+
+[certificatesResolvers.staging-cf.acme]
+  email = "${ACME_EMAIL}"
+  storage = "${ACME_STORAGE:-/etc/traefik/config/acme.json}"
+  [certificatesResolvers.staging.cloudflared.dnsChallenge]
+    provider = "cloudflare"
+    delayBeforeCheck = "0"
+    resolvers = []
+  [certificatesResolvers.staging.cloudflared.httpChallenge]
+    entryPoint = "web"
+
+[certificatesResolvers.production-cf.acme]
+  email = "${ACME_EMAIL}"
+  storage = "${ACME_STORAGE:-/etc/traefik/config/acme.json}"
+  [certificatesResolvers.production.cloudflared.dnsChallenge]
+    provider = "cloudflare"
+    delayBeforeCheck = "0"
+    resolvers = []
+  [certificatesResolvers.production.cloudflared.httpChallenge]
+    entryPoint = "web"
+

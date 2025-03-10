@@ -1,0 +1,6 @@
+http:
+  middlewares:
+    modsecurity:
+      plugin:
+        modsecurity:
+          modSecurityUrl: http://modsecurity:8080

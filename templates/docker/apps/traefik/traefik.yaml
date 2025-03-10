@@ -1,0 +1,128 @@
+global:
+  sendAnonymousUsage: false
+  checkNewVersion: false
+
+providers:
+  file:
+    directory: "/etc/traefik/config"
+    watch: true
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    network: "edge"
+    watch: true
+    exposedByDefault: false
+  swarm:
+    endpoint: "unix:///var/run/docker.sock"
+    network: "edge"
+    watch: true
+    exposedByDefault: false
+    useBindPortIP: true
+    refreshSeconds: 15
+    httpClientTimeout: 10
+
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: "websecure"
+          scheme: "https"
+  websecure:
+    address: ":443"
+    asDefault: true
+    http:
+      tls:
+        options: tls-opts@file
+        certResolver: "staging"
+        # domains:
+        #   - main: "domain.tld"
+        #     sans:
+        #       - "*.domain.tld"
+    forwardedHeaders:
+      trustedIPs:
+        # Cloudflare (https://www.cloudflare.com/ips-v4)
+        - "173.245.48.0/20"
+        - "103.21.244.0/22"
+        - "103.22.200.0/22"
+        - "103.31.4.0/22"
+        - "141.101.64.0/18"
+        - "108.162.192.0/18"
+        - "190.93.240.0/20"
+        - "188.114.96.0/20"
+        - "197.234.240.0/22"
+        - "198.41.128.0/17"
+        - "162.158.0.0/15"
+        - "104.16.0.0/13"
+        - "104.24.0.0/14"
+        - "172.64.0.0/13"
+        - "131.0.72.0/22"
+        # Local IPs
+        - "127.0.0.1/32"
+        - "10.0.0.0/8"
+        - "192.168.0.0/16"
+        - "172.16.0.0/12"
+  traefik:
+    address: ":8080"
+  metrics:
+    address: ":8899"
+  ping:
+    address: ":8082"
+
+ping:
+  entryPoint: "ping"
+    
+api:
+  dashboard: true
+  insecure: true
+
+certificatesResolvers:
+  cloudflare:
+    acme:
+      email: security@yellowteam.xyz
+      storage: /letsencrypt/cloudflare.json
+      dnsChallenge:
+        provider: cloudflare
+        # disablePropagationCheck: true
+        # delayBeforeCheck: 60s
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+          - "8.8.8.8:53" 
+  staging:
+    acme:
+      email: security@yellowteam.xyz
+      storage: /letsencrypt/acme.json
+      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      # certificatesDuration: 24h
+      httpChallenge:
+        entryPoint: "web"
+  production:
+    acme:
+      email: security@yellowteam.xyz
+      storage: /letsencrypt/acme.production.json
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      # tlsChallenge: {}
+      httpChallenge:
+        entryPoint: "web"
+
+metrics:
+  prometheus:
+    buckets:
+      - 0.100000
+      - 0.300000
+      - 1.200000
+      - 5.000000
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: metrics
+
+experimental:
+  plugins:
+    safeline:
+      moduleName: "github.com/chaitin/traefik-safeline"
+      version: "v1.4.0"
+    modsecurity:
+      moduleName: "github.com/acouvreur/traefik-modsecurity-plugin"
+      version: "v1.3.0"

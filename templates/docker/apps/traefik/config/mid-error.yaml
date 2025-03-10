@@ -1,0 +1,8 @@
+# http:
+#   middlewares:
+#     error-pages:
+#       errors:
+#         status:
+#           - "400-599"
+#         service: "error-pages"
+#         query: "/{status}.html"

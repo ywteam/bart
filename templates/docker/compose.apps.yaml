@@ -1,0 +1,4 @@
+include:
+  - path:
+    - apps/traefik/compose.yaml
+    - apps/authentik/compose.yaml

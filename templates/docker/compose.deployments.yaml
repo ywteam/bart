@@ -1,0 +1,509 @@
+# Deploy constraints
+x-stack-svc-deploy-constraints-manager: &stack-svc-deploy-constraints-manager
+  constraints:
+    - node.role == manager
+x-stack-svc-deploy-constraints-worker: &stack-svc-deploy-constraints-worker
+  constraints:
+    - node.role == worker
+x-stack-svc-deploy-constraints-linux: &stack-svc-deploy-constraints-linux
+  constraints:
+    - node.platform.os == linux
+  
+
+# Deploy policy
+x-stack-svc-deploy-restart: &stack-svc-deploy-restart
+  condition: ${STACK_DEPLOY_RESTART_CONDITION:-on-failure}
+  delay: 30s
+  max_attempts: 5
+  window: 240s
+x-stack-svc-deploy-rollback: &stack-svc-deploy-rollback
+  parallelism: 1
+  delay: 10s
+  failure_action: ${STACK_DEPLOY_ROLLBACK_FAILURE_ACTION:-rollback}
+  monitor: 60s
+  order: stop-first
+x-stack-svc-deploy-update: &stack-svc-deploy-update
+  parallelism: 1
+  delay: 10s
+  order: stop-first
+x-stack-svc-deploy-policy: &stack-svc-deploy-policy
+  restart_policy:
+    <<: *stack-svc-deploy-restart
+  rollback_config:
+    <<: *stack-svc-deploy-rollback
+  update_config:
+    <<: *stack-svc-deploy-update
+
+# Deploy mode
+x-stack-svc-deploy-mode-global: &stack-svc-deploy-mode-global
+  <<: *stack-svc-deploy-policy
+  mode: global
+  # replicas: 1
+x-stack-svc-deploy-mode-replicated: &stack-svc-deploy-mode-replicated
+  <<: *stack-svc-deploy-policy
+  mode: replicated
+  replicas: 1
+# Deploy role
+
+x-stack-svc-deploy-manager-global: &stack-svc-deploy-manager-global
+  <<: *stack-svc-deploy-mode-global
+  placement:
+    <<: *stack-svc-deploy-constraints-manager
+x-stack-svc-deploy-manager-replicated: &stack-svc-deploy-manager-replicated
+  <<: *stack-svc-deploy-mode-replicated
+  placement:
+    <<: *stack-svc-deploy-constraints-manager
+x-stack-svc-deploy-worker-global: &stack-svc-deploy-worker-global
+  <<: *stack-svc-deploy-mode-global
+  placement:
+    <<: *stack-svc-deploy-constraints-worker
+x-stack-svc-deploy-worker-replicated: &stack-svc-deploy-worker-replicated
+  <<: *stack-svc-deploy-mode-replicated
+  placement:
+    <<: *stack-svc-deploy-constraints-worker
+# Deploy size
+x-stack-svc-deploy-resources-limits-small: &stack-svc-deploy-resources-limits-small
+  cpus: '0.50'
+  memory: 250M
+x-stack-svc-deploy-resources-limits-medium: &stack-svc-deploy-resources-limits-medium
+  cpus: '1.00'
+  memory: 500M
+x-stack-svc-deploy-resources-limits-large: &stack-svc-deploy-resources-limits-large
+  cpus: '2.00'
+  memory: 1G
+x-stack-svc-deploy-resources-limits-xlarge: &stack-svc-deploy-resources-limits-xlarge
+  cpus: '4.00'
+  memory: 2G
+x-stack-svc-deploy-resources-limits-xxlarge: &stack-svc-deploy-resources-limits-xxlarge
+  cpus: '8.00'
+  memory: 16G
+x-stack-svc-deploy-resources-limits-vps: &stack-svc-deploy-resources-limits-vps
+  cpus: '8.00'
+  memory: 32G
+## Reservations
+x-stack-svc-deploy-resources-reservations-small: &stack-svc-deploy-resources-reservations-small
+  cpus: '0.25'
+  memory: 500M
+x-stack-svc-deploy-resources-reservations-medium: &stack-svc-deploy-resources-reservations-medium
+  cpus: '0.50'
+  memory: 1G
+x-stack-svc-deploy-resources-reservations-large: &stack-svc-deploy-resources-reservations-large
+  cpus: '0.75'
+  memory: 2G
+x-stack-svc-deploy-resources-reservations-xlarge: &stack-svc-deploy-resources-reservations-xlarge
+  cpus: '1.00'
+  memory: 4G
+x-stack-svc-deploy-resources-reservations-xxlarge: &stack-svc-deploy-resources-reservations-xxlarge
+  cpus: '2.00'
+  memory: 8G
+x-stack-svc-deploy-resources-reservations-vps: &stack-svc-deploy-resources-reservations-vps
+  cpus: '4.00'
+  memory: 16G  
+# deploy variations: <deploy-mode>-<deploy-role>-<deploy-size>
+# <global|replicated>-<manager|worker>-<small|medium|large|xlarge|xxlarge|vps>
+x-stack-svc-deploy-global-small: &stack-svc-deploy-global-small
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-global-medium: &stack-svc-deploy-global-medium
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-global-large: &stack-svc-deploy-global-large
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-global-xlarge: &stack-svc-deploy-global-xlarge
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-global-xxlarge: &stack-svc-deploy-global-xxlarge
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-global-vps: &stack-svc-deploy-global-vps
+  <<: *stack-svc-deploy-mode-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+x-stack-svc-deploy-replicated-small: &stack-svc-deploy-replicated-small
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-replicated-medium: &stack-svc-deploy-replicated-medium
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-replicated-large: &stack-svc-deploy-replicated-large
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-replicated-xlarge: &stack-svc-deploy-replicated-xlarge
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-replicated-xxlarge: &stack-svc-deploy-replicated-xxlarge
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-replicated-vps: &stack-svc-deploy-replicated-vps
+  <<: *stack-svc-deploy-mode-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+x-stack-svc-deploy-global-manager-small: &stack-svc-deploy-global-manager-small
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-global-manager-medium: &stack-svc-deploy-global-manager-medium
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-global-manager-large: &stack-svc-deploy-global-manager-large
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-global-manager-xlarge: &stack-svc-deploy-global-manager-xlarge
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-global-manager-xxlarge: &stack-svc-deploy-global-manager-xxlarge
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-global-manager-vps: &stack-svc-deploy-global-manager-vps
+  <<: *stack-svc-deploy-manager-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+x-stack-svc-deploy-replicated-manager-small: &stack-svc-deploy-replicated-manager-small
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-replicated-manager-medium: &stack-svc-deploy-replicated-manager-medium
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-replicated-manager-large: &stack-svc-deploy-replicated-manager-large
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-replicated-manager-xlarge: &stack-svc-deploy-replicated-manager-xlarge
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-replicated-manager-xxlarge: &stack-svc-deploy-replicated-manager-xxlarge
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-replicated-manager-vps: &stack-svc-deploy-replicated-manager-vps
+  <<: *stack-svc-deploy-manager-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+x-stack-svc-deploy-global-worker-small: &stack-svc-deploy-global-worker-small
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-global-worker-medium: &stack-svc-deploy-global-worker-medium
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-global-worker-large: &stack-svc-deploy-global-worker-large
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-global-worker-xlarge: &stack-svc-deploy-global-worker-xlarge
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-global-worker-xxlarge: &stack-svc-deploy-global-worker-xxlarge
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-global-worker-vps: &stack-svc-deploy-global-worker-vps
+  <<: *stack-svc-deploy-worker-global
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+x-stack-svc-deploy-replicated-worker-small: &stack-svc-deploy-replicated-worker-small
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-small
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-small
+x-stack-svc-deploy-replicated-worker-medium: &stack-svc-deploy-replicated-worker-medium
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-medium
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-medium
+x-stack-svc-deploy-replicated-worker-large: &stack-svc-deploy-replicated-worker-large
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-large
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-large
+x-stack-svc-deploy-replicated-worker-xlarge: &stack-svc-deploy-replicated-worker-xlarge
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xlarge
+x-stack-svc-deploy-replicated-worker-xxlarge: &stack-svc-deploy-replicated-worker-xxlarge
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-xxlarge
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-xxlarge
+x-stack-svc-deploy-replicated-worker-vps: &stack-svc-deploy-replicated-worker-vps
+  <<: *stack-svc-deploy-worker-replicated
+  resources:
+    limits:
+      <<: *stack-svc-deploy-resources-limits-vps
+    reservations:
+      <<: *stack-svc-deploy-resources-reservations-vps
+
+
+
+services:
+  stack-svc-base: &stack-svc-base
+    extends:
+      file: compose.service.yaml
+      service: stack-svc-base
+  stack-svc-global-small: &stack-svc-global-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-small
+  stack-svc-global-medium: &stack-svc-global-medium
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-medium
+  stack-svc-global-large: &stack-svc-global-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-large
+  stack-svc-global-xlarge: &stack-svc-global-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-xlarge
+  stack-svc-global-xxlarge: &stack-svc-global-xxlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-xxlarge
+  stack-svc-global-vps: &stack-svc-global-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-vps
+  stack-svc-replicated-small: &stack-svc-replicated-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-small
+  stack-svc-replicated-medium: &stack-svc-replicated-medium
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-medium
+  stack-svc-replicated-large: &stack-svc-replicated-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-large
+  stack-svc-replicated-xlarge: &stack-svc-replicated-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-xlarge
+  stack-svc-replicated-xxlarge: &stack-svc-replicated-xxlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-xxlarge
+  stack-svc-replicated-vps: &stack-svc-replicated-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-vps
+  stack-svc-global-manager-small: &stack-svc-global-manager-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-small
+  stack-svc-global-manager-medium: &stack-svc-global-manager-medium-
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-medium
+  stack-svc-global-manager-large: &stack-svc-global-manager-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-large
+  stack-svc-global-manager-xlarge: &stack-svc-global-manager-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-xlarge
+  stack-svc-global-manager-xxlarge: &stack-svc-global-manager-xxlarge-
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-xxlarge
+  stack-svc-global-manager-vps: &stack-svc-global-manager-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-manager-vps
+  stack-svc-replicated-manager-small: &stack-svc-replicated-manager-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-small
+  stack-svc-replicated-manager-medium: &stack-svc-replicated-manager-medium
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-medium
+  stack-svc-replicated-manager-large: &stack-svc-replicated-manager-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-large
+  stack-svc-replicated-manager-xlarge: &stack-svc-replicated-manager-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-xlarge
+  stack-svc-replicated-manager-xxlarge: &stack-svc-replicated-manager-xxlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-xxlarge
+  stack-svc-replicated-manager-vps: &stack-svc-replicated-manager-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-manager-vps
+  stack-svc-global-worker-small: &stack-svc-global-worker-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-small
+  stack-svc-global-worker-medium: &stack-svc-global-worker-medium
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-medium
+  stack-svc-global-worker-large: &stack-svc-global-worker-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-large
+  stack-svc-global-worker-xlarge: &stack-svc-global-worker-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-xlarge
+  stack-svc-global-worker-xxlarge: &stack-svc-global-worker-xxlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-xxlarge
+  stack-svc-global-worker-vps: &stack-svc-global-worker-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-global-worker-vps
+  stack-svc-replicated-worker-small: &stack-svc-replicated-worker-small
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-small
+  stack-svc-replicated-worker-medium: &stack-svc-replicated-worker-medium
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-medium
+  stack-svc-replicated-worker-large: &stack-svc-replicated-worker-large
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-large
+  stack-svc-replicated-worker-xlarge: &stack-svc-replicated-worker-xlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-xlarge
+  stack-svc-replicated-worker-xxlarge: &stack-svc-replicated-worker-xxlarge
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-xxlarge
+  stack-svc-replicated-worker-vps: &stack-svc-replicated-worker-vps
+    <<: *stack-svc-base
+    deploy:
+      <<: *stack-svc-deploy-replicated-worker-vps
+
+

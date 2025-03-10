@@ -1,0 +1,35 @@
+networks:
+  stack:
+    name: ${STACK_PREFIX}-network
+    driver: overlay
+    external: ${STACK_NETWORK_BRIDGE_EXTERNAL:-true}
+    enable_ipv6: false
+    enable_ipv4: true
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: ${STACK_NETWORK_BRIDGE_PREFIX:-10.0.0}.0/24
+          ip_range: ${STACK_NETWORK_BRIDGE_PREFIX:-10.0.0}.0/24
+          gateway: ${STACK_NETWORK_BRIDGE_PREFIX:-10.0.0}.1
+          aux_addresses: 
+            safeline: ${STACK_NETWORK_BRIDGE_PREFIX:-10.0.0}.2
+            pihole: ${STACK_NETWORK_BRIDGE_PREFIX:-10.0.0}.3
+    driver_opts:
+      # com.docker.network.bridge.name: stack-${STACK_NETWORK_NAME:-yellow}
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+      com.docker.network.driver.mtu: "1500"
+  stack-edge:
+    name: ${STACK_PREFIX}-edge
+    driver: overlay
+    external: ${STACK_NETWORK_OVERLAY_EXTERNAL:-false}
+    attachable: true
+    enable_ipv6: false
+    enable_ipv4: true
+  stack-ipv6:
+    name: ${STACK_PREFIX}-ipv6
+    driver: overlay
+    external: ${STACK_NETWORK_OVERLAY_EXTERNAL:-false}
+    enable_ipv6: true
+    attachable: true

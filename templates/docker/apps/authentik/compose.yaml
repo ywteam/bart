@@ -1,0 +1,187 @@
+x-authentik-svc: &authentik-svc
+  extends:
+    file: ../../compose.deployments.yaml
+    service: stack-svc-replicated-medium # stack-svc-global-medium
+  restart: unless-stopped
+
+x-authentik-env: &authentik-env
+  AUTHENTIK_COOKIE_DOMAIN: ${STACK_DOMAIN}
+  AUTHENTIK_HOST: http://authentik-server:9000
+  AUTHENTIK_HOST_BROWSER: https://authentik.${STACK_DOMAIN}  
+  AUTHENTIK_REDIS__HOST: authentik-redis
+  AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql
+  AUTHENTIK_POSTGRESQL__USER: ${SVC_AUTHENTIK_PG_USER:-authentik}
+  AUTHENTIK_POSTGRESQL__NAME: ${SVC_AUTHENTIK_PG_DB:-authentik}
+  AUTHENTIK_POSTGRESQL__PASSWORD: ${SVC_AUTHENTIK_PG_PASS}
+  AUTHENTIK_SECRET_KEY: ${SVC_AUTHENTIK_SECRET_KEY}
+  AUTHENTIK_ERROR_REPORTING__ENABLED: ${SVC_AUTHENTIK_ERROR_REPORTING__ENABLED}
+  AUTHENTIK_EMAIL__HOST: ${SVC_AUTHENTIK_EMAIL__HOST}
+  AUTHENTIK_EMAIL__PORT: ${SVC_AUTHENTIK_EMAIL__PORT}
+  AUTHENTIK_EMAIL__USERNAME: ${SVC_AUTHENTIK_EMAIL__USERNAME}
+  AUTHENTIK_EMAIL__PASSWORD: ${SVC_AUTHENTIK_EMAIL__PASSWORD}
+  AUTHENTIK_EMAIL__USE_TLS: ${SVC_AUTHENTIK_EMAIL__USE_TLS}
+  AUTHENTIK_EMAIL__USE_SSL: ${SVC_AUTHENTIK_EMAIL__USE_SSL}
+  AUTHENTIK_EMAIL__TIMEOUT: ${SVC_AUTHENTIK_EMAIL__TIMEOUT}
+  AUTHENTIK_EMAIL__FROM: ${SVC_AUTHENTIK_EMAIL__FROM}
+  # TMPDIR: /tmp
+
+
+services:
+  authentik-redis:
+    <<: *authentik-svc
+    image: docker.io/library/redis:7.4.2-alpine     #https://hub.docker.com/_/redis/tags
+    container_name: authentik-redis
+    command: --save 60 1 --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - authentik-redis:/data
+  authentik-postgresql:
+    <<: *authentik-svc
+    image: docker.io/library/postgres:17.4-alpine   # https://hub.docker.com/_/postgresredis
+    container_name: authentik-postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - authentik-database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${SVC_AUTHENTIK_PG_PASS:-authentik}
+      POSTGRES_USER: ${SVC_AUTHENTIK_PG_USER:-authentik}
+      POSTGRES_DB: ${SVC_AUTHENTIK_PG_DB:-authentik}
+  authentik-server:
+    <<: *authentik-svc
+    image: ghcr.io/goauthentik/server:${SVC_AUTHENTIK_VERSION:-2025.2.1}
+    container_name: authentik-server
+    command: server
+    environment:
+      <<: *authentik-env
+    # ports:
+    #   - mode: host
+    #     target: 9000
+    #     published: ${SVC_AUTHENTIK_PORT_HTTP:-9000}
+    #     protocol: tcp
+    #   - mode: host
+    #     target: 9443
+    #     published: ${SVC_AUTHENTIK_PORT_HTTPS:-9443}
+    #     protocol: tcp
+      # - "${SVC_AUTHENTIK_PORT_HTTP:-9000}:9000"
+      # - "${SVC_AUTHENTIK_PORT_HTTPS:-9443}:9443"
+    volumes:
+      - ${STACK_CURRENT_DIR}/apps/authentik/data/media:/media
+      - ${STACK_CURRENT_DIR}/apps/authentik/data/templates:/templates    
+    depends_on:
+      authentik-postgresql:
+        condition: service_healthy
+      authentik-redis:
+        condition: service_healthy
+    # Configure your monitoring software to send requests to /-/health/live/, which will return a HTTP 200 response as long as authentik is running. You can also send HTTP requests to /-/health/ready/, which will return HTTP 200 if both PostgreSQL and Redis connections can be/have been established correctly.
+    # healthcheck:
+    #   test: ["CMD", "curl", "--fail", "http://localhost:9000/-/health/ready/"]
+    #   interval: 60s
+    #   timeout: 30s
+    #   retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authentik.rule=Host(`authentik.${STACK_DOMAIN}`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.routers.authentik.tls.certresolver=staging"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"      
+      - "traefik.http.services.authentik.loadbalancer.healthcheck.path=/-/health/live/"
+  authentik-worker:
+    <<: *authentik-svc
+    image: ghcr.io/goauthentik/server:${SVC_AUTHENTIK_VERSION:-2025.2.1}
+    # container_name: authentik-worker
+    command: worker
+    environment:
+      <<: *authentik-env
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    deploy:
+      replicas: 2
+      # restart_policy:
+      #   condition: none        
+    volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock
+      - authentik-certs:/certs
+      - ${STACK_CURRENT_DIR}/apps/authentik/data/media:/media
+      - ${STACK_CURRENT_DIR}/apps/authentik/data/templates:/templates
+    depends_on:
+      authentik-postgresql:
+        condition: service_healthy
+      authentik-redis:
+        condition: service_healthy
+  authentik-proxy:
+    <<: *authentik-svc
+    image: ghcr.io/goauthentik/proxy:${SVC_AUTHENTIK_VERSION:-2025.2.1}
+    restart: always
+    container_name: authentik-proxy
+    environment:
+      - AUTHENTIK_HOST=http://authentik-server:9000
+      - AUTHENTIK_HOST_BROWSER=https://authentik.${STACK_DOMAIN}
+      - AUTHENTIK_PORT=9000
+      - AUTHENTIK_INSECURE=false
+      - AUTHENTIK_TOKEN=${SVC_AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_DEBUG=true  # Added to enable debug mode
+    ports:
+      - "${SVC_AUTHENTIK_PORT_HTTP:-9000}:9000"
+      - "${SVC_AUTHENTIK_PORT_HTTPS:-9443}:9443"
+    networks:
+      - stack-edge
+    # healthcheck:
+    #   test: ["CMD", "curl", "--fail", "http://localhost:9000/-/health/live/"]
+    #   interval: 60s
+    #   timeout: 30s
+    #   retries: 5
+    depends_on:
+      authentik-server:
+        condition: service_healthy
+  
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.http.routers.authentik.rule=Host(`auth.${STACK_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.authentik-output.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.${STACK_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/auth/traefik`)"
+      - "traefik.http.routers.authentik-output.entrypoints=websecure"
+      - "traefik.http.routers.authentik-output.tls=true"
+      - "traefik.http.routers.authentik-output.tls.certresolver=staging"
+      - "traefik.http.services.authentik-output.loadbalancer.server.port=9000"
+      - "traefik.http.routers.authentik-output.middlewares=authentik@file"
+      # - "traefik.http.middlewares.authentik-output.forwardauth.address=http://authentik-proxy:9000/outpost.goauthentik.io/auth/traefik"
+      # - "traefik.http.middlewares.authentik-output.forwardauth.trustForwardHeader=true"
+      # - "traefik.http.middlewares.authentik-output.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+    
+
+volumes:
+  authentik-certs:
+    name: ${STACK_PREFIX}-authentik-certs
+    driver: local
+  authentik-database:
+    name: ${STACK_PREFIX}-authentik-postgresql
+    driver: local
+  authentik-redis:
+    name: ${STACK_PREFIX}-authentik-redis
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
+# networks:
+#   authentik-network:
+#     name: ${STACK_PREFIX}-authentik-network
+#     # driver: overlay
+#     # external: false

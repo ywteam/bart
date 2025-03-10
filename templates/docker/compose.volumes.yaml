@@ -1,0 +1,27 @@
+volumes:
+  stack-tmp:
+    driver: local
+    name: ${STACK_PREFIX}-tmp
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STACK_TMP_DIR:-/tmp/yellow}
+  stack-logs:
+    driver: local
+    name: ${STACK_PREFIX}-logs
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STACK_LOGS_DIR:-/var/log/yellow}
+  stack-data:
+    driver: local
+    name: ${STACK_PREFIX}-data
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  stack-tmpfs:
+    driver: local
+    name: ${STACK_PREFIX}-tmpfs
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
